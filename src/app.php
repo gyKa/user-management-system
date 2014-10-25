@@ -77,6 +77,40 @@ $groups->delete('/{id}', function ($id) use ($app) {
     return new Response('', 404);
 })->assert('id', '\d+');
 
+// Users managements on groups.
+$users->post('/{user_id}/add_group/{group_id}', function ($user_id, $group_id) use ($app) {
+    $exists_ids = $app['db']->fetchColumn(
+        'SELECT 1 FROM users INNER JOIN groups ON groups.id = ? WHERE users.id = ?',
+        [$group_id, $user_id]
+    );
+
+    if (!$exists_ids) {
+        return new Response('', 404);
+    }
+
+    // Check duplication.
+    try {
+        $app['db']->insert('user_groups', [
+            'user_id' => $user_id,
+            'group_id' => $group_id,
+        ]);
+    } catch (\Doctrine\DBAL\DBALException $e) {
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            return ''; // Return 200.
+        }
+    }
+
+    return new Response('', 201);
+})->assert('user_id', '\d+')->assert('group_id', '\d+');
+
+$users->delete('/{user_id}/delete_group/{group_id}', function ($user_id, $group_id) use ($app) {
+    if ($app['db']->delete('user_groups', ['user_id' => $user_id, 'group_id' => $group_id])) {
+        return new Response('', 204);
+    }
+
+    return new Response('', 404);
+})->assert('user_id', '\d+')->assert('group_id', '\d+');
+
 // Mount routers on API url.
 $app->mount(
     $app['api.endpoint'].'/'.$app['api.version'].'/users',
