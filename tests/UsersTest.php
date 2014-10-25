@@ -13,7 +13,11 @@ class UsersTest extends TestCase
     {
         $this->app = $this->createApplication();
         $this->faker = \Faker\Factory::create();
-        $this->client = new \GuzzleHttp\Client();
+        $this->client = new \GuzzleHttp\Client([
+            'defaults' => [
+                'auth' => [$this->app['admin.user'], $this->app['admin.pass']],
+            ]
+        ]);
         $this->url = 'http://localhost:8080'.$this->app['api.endpoint'].'/'.$this->app['api.version'].'/users/';
     }
 

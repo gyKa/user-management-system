@@ -8,6 +8,8 @@ $app = new Silex\Application();
 $app['debug'] = true;
 $app['api.version'] = 'v1';
 $app['api.endpoint'] = '/api';
+$app['admin.user'] = 'admin';
+$app['admin.pass'] = 'password123'; // ENCRYPT!
 
 // Database settings.
 $db_config = require __DIR__.'/database.php';
@@ -24,6 +26,16 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), [
         'charset' => 'utf8',
     ]
 ]);
+
+// HTTP basic auth.
+$app->before(function (Request $request) use ($app) {
+    if ($app['admin.user'] !== [$_SERVER['PHP_AUTH_USER']] &&
+    $app['admin.pass'] !== $_SERVER['PHP_AUTH_PW']) {
+        header('WWW-Authenticate: Basic realm=API');
+
+        return new Response('', 401); // Not authorized.
+    }
+});
 
 // Users routers.
 $users = $app['controllers_factory'];
