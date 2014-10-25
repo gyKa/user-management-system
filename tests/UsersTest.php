@@ -54,6 +54,6 @@ class UsersTest extends TestCase
         // Send request with max stored id.
         $latest_id = $this->app['db']->fetchColumn('SELECT MAX(id) FROM users');
         $response = $this->client->delete($this->url.$latest_id);
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(204, $response->getStatusCode());
     }
 }

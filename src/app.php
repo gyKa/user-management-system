@@ -40,7 +40,7 @@ $users->post('/', function (Request $request) use ($app) {
 });
 $users->delete('/{id}', function ($id) use ($app) {
     if ($app['db']->delete('users', array('id' => $id))) {
-        return '';
+        return new Response('', 204);
     }
 
     return new Response('', 404);
@@ -60,10 +60,20 @@ $groups->post('/', function (Request $request) use ($app) {
     return new Response('', 201);
 });
 $groups->delete('/{id}', function ($id) use ($app) {
-    if ($app['db']->delete('groups', array('id' => $id))) {
+    $has_users = $app['db']->fetchColumn(
+        'SELECT COUNT(*) FROM user_groups WHERE group_id = ?',
+        [$id]
+    );
+
+    if ($has_users) {
         return '';
     }
 
+    if ($app['db']->delete('groups', array('id' => $id))) {
+        return new Response('', 204);
+    }
+
+    // Group was not found.
     return new Response('', 404);
 })->assert('id', '\d+');
 
